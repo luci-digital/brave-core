@@ -5,7 +5,6 @@
 
 #include "brave/components/ntp_background_images/browser/ntp_background_images_service.h"
 
-#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -43,7 +42,8 @@ namespace ntp_background_images {
 
 namespace {
 
-constexpr char kNTPManifestFile[] = "photo.json";
+constexpr char kNTPBackgroundManifestFile[] = "photo.json";
+constexpr char kNTPSponsoredManifestFile[] = "campaigns.json";
 constexpr char kNTPSRMappingTableFile[] = "mapping-table.json";
 
 constexpr char kNTPSRMappingTableComponentPublicKey[] = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp7IWv7wzH/KLrxx7BKWOIIUMDylQNzxwM5Fig2WHc16BoMW9Kaya/g17Bpfp0YIvxdcmDBcB9kFALqQLxi1WQfa9d7YxqcmAGUKo407RMwEa6dQVkIPMFz2ZPGSfFgr526gYOqWh3Q4h8oN94qxBLgFyT25SMK5zQDGyq96ntME4MQRNwpDBUv7DDK7Npwe9iE8cBgzYTvf0taAFn2ZZi1RhS0RzpdynucpKosnc0sVBLTXy+HDvnMr+77T48zM0YmpjIh8Qmrp9CNbKzZUsZzNfnHpL9IZnjwQ51EOYdPGX2r1obChVZN19HzpK5scZEMRKoCMfCepWpEkMSIoPzQIDAQAB";  // NOLINT
@@ -59,28 +59,39 @@ std::string GetMappingTableData(const base::FilePath& installed_dir) {
   return contents;
 }
 
-// If registered component is for sponsored images wallpaper, it has photo.json
-// in |installed_dir|. Otherwise, it has data.json for super referral.
-// This methods cache super referral's favicon data because that favicon images
-// could be used after campaign ends.
-// And return manifest json string.
+// If registered component is for sponsored images wallpaper, it has
+// campaigns.json in |installed_dir|. Otherwise, it has data.json for super
+// referral. This methods cache super referral's favicon data because that
+// favicon images could be used after campaign ends. And return manifest json
+// string.
 std::string HandleComponentData(const base::FilePath& installed_dir) {
-  base::FilePath json_path = installed_dir.AppendASCII(kNTPManifestFile);
+  // TODO(tmancey): @aseren to unblock me I have had to hack in support for
+  // campaigns.json for NTP Sponsored Images, because NTP Background Images will
+  // still require photo.json. See my TODO comment in
+  // components/ntp_background_images/browser/ntp_sponsored_rich_media_source.h.
+  // This hack should be removed as part of fixing that comment.
+  base::FilePath background_images_json_path =
+      installed_dir.AppendASCII(kNTPBackgroundManifestFile);
+  base::FilePath sponsored_images_json_path =
+      installed_dir.AppendASCII(kNTPSponsoredManifestFile);
+
   std::string contents;
 
-  if (json_path.empty()) {
-    // NTP sponsored component should have photo.json always but anything can
-    // happen outside of browser. Handle it gracefully instead of crash.
+  if (background_images_json_path.empty() &&
+      sponsored_images_json_path.empty()) {
+    // NTP sponsored component should have campaigns.json always but anything
+    // can happen outside of browser. Handle it gracefully instead of crash.
     VLOG(6) << "Cannot find valid NTP Images component manifest file in: "
             << installed_dir;
     return contents;
   }
 
-  bool success = base::ReadFileToString(json_path, &contents);
+  bool success = base::ReadFileToString(sponsored_images_json_path, &contents);
+  if (!success) {
+    success = base::ReadFileToString(background_images_json_path, &contents);
+  }
   if (!success || contents.empty()) {
-    VLOG(6) << "Cannot read NTP Images component manifest file at: "
-            << json_path;
-    return contents;
+    VLOG(6) << "Cannot read NTP Images component manifest file";
   }
 
   return contents;

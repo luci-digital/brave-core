@@ -184,9 +184,9 @@ void AdsImpl::SaveNewTabPageAds(base::Value::Dict value,
                        std::move(value), std::move(callback)));
   }
 
-  // TODO(tmancey): Save new tab page ads to the database and ensure they are
-  // not saved for non-Rewards users. When saving, delete old entries to avoid
-  // serving outdated ads.
+  // TODO(tmancey): @terry save new tab page ads to the database and ensure they
+  // are not saved for non-Rewards users. When saving, delete old entries to
+  // avoid serving outdated ads.
 }
 
 void AdsImpl::MaybeServeNewTabPageAd(MaybeServeNewTabPageAdCallback callback) {

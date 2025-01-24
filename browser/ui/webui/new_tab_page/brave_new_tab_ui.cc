@@ -10,11 +10,13 @@
 
 #include "base/check.h"
 #include "base/feature_list.h"
+#include "brave/browser/brave_ads/ads_service_factory.h"
 #include "brave/browser/brave_browser_process.h"
 #include "brave/browser/brave_news/brave_news_controller_factory.h"
 #include "brave/browser/misc_metrics/process_misc_metrics.h"
 #include "brave/browser/new_tab/new_tab_shows_options.h"
 #include "brave/browser/ntp_background/brave_ntp_custom_background_service_factory.h"
+#include "brave/browser/ntp_background/ntp_p3a_helper_impl.h"
 #include "brave/browser/ui/brave_ui_features.h"
 #include "brave/browser/ui/webui/brave_webui_source.h"
 #include "brave/browser/ui/webui/new_tab_page/brave_new_tab_message_handler.h"
@@ -23,9 +25,11 @@
 #include "brave/components/brave_new_tab/resources/grit/brave_new_tab_generated_map.h"
 #include "brave/components/brave_news/browser/brave_news_controller.h"
 #include "brave/components/brave_news/common/features.h"
+#include "brave/components/constants/webui_url_constants.h"
 #include "brave/components/l10n/common/localization_util.h"
 #include "brave/components/misc_metrics/new_tab_metrics.h"
 #include "brave/components/ntp_background_images/browser/ntp_custom_images_source.h"
+#include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/search_engines/template_url_service_factory.h"
 #include "chrome/browser/themes/theme_syncable_service.h"
@@ -36,6 +40,7 @@
 #include "content/public/browser/url_data_source.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui_data_source.h"
+#include "content/public/common/url_constants.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "ui/webui/resources/cr_components/searchbox/searchbox.mojom.h"
 
@@ -75,6 +80,8 @@ BraveNewTabUI::BraveNewTabUI(content::WebUI* web_ui, const std::string& name)
   // Non blank NTP.
   content::WebUIDataSource* source = CreateAndAddWebUIDataSource(
       web_ui, name, kBraveNewTabGenerated, IDR_BRAVE_NEW_TAB_HTML);
+
+  web_ui->AddRequestableScheme(content::kChromeUIUntrustedScheme);
 
   AddBackgroundColorToSource(source, web_contents);
 
@@ -127,6 +134,13 @@ BraveNewTabUI::BraveNewTabUI(content::WebUI* web_ui, const std::string& name)
                                 std::make_unique<NTPCustomImagesSource>(
                                     ntp_custom_background_images_service));
   }
+
+  source->OverrideContentSecurityPolicy(
+      network::mojom::CSPDirectiveName::FrameSrc,
+      std::string("frame-src ") + kRichMediaURL + ";");
+  // TODO(tmancey): @aseren for consistency your thoughts on
+  // "ntpSponsoredRichMediaUrl"?
+  source->AddString("braveRichMediaUrl", kRichMediaURL);
 }
 
 BraveNewTabUI::~BraveNewTabUI() = default;
@@ -188,6 +202,7 @@ void BraveNewTabUI::CreatePageHandler(
   page_handler_ = std::make_unique<BraveNewTabPageHandler>(
       std::move(pending_page_handler), std::move(pending_page), profile,
       web_ui()->GetWebContents());
+
   g_brave_browser_process->process_misc_metrics()->new_tab_metrics()->Bind(
       std::move(pending_new_tab_metrics));
 }

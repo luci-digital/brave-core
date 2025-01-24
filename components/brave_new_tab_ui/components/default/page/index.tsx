@@ -26,9 +26,14 @@ interface HasImageProps {
   colorForBackground?: string
 }
 
+interface HasSponsoredRichMediaProps {
+  hasSponsoredRichMediaBackground: boolean
+  sponsoredRichMediaBackgroundHasLoaded: boolean
+}
+
 type AppProps = {
   dataIsReady: boolean
-} & HasImageProps
+} & HasImageProps & HasSponsoredRichMediaProps
 
 type PageProps = {
   showClock: boolean
@@ -36,7 +41,7 @@ type PageProps = {
   showCryptoContent: boolean
   showTopSites: boolean
   showBrandedWallpaper: boolean
-} & HasImageProps
+} & HasImageProps & HasSponsoredRichMediaProps
 
 function getItemRowCount(p: PageProps): number {
   let right = (p.showClock ? 1 : 0) + (p.showCryptoContent ? 2 : 0)
@@ -107,6 +112,11 @@ const StyledPage = styled('div') <PageProps>`
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  pointer-events: none;  // Allow clicks to pass through to background
+  & > * {
+    pointer-events: auto;  // Restore click events for child elements
   }
 `
 
@@ -314,7 +324,11 @@ export const FooterContent = styled('div')`
 `
 
 // Gets the value of the CSS `background` property.
-function getBackground(p: HasImageProps) {
+function getBackground(p: HasImageProps & HasSponsoredRichMediaProps) {
+  if (p.hasSponsoredRichMediaBackground) {
+    return ``
+  }
+
   if (!p.hasImage) {
     return p.colorForBackground || `linear-gradient(to bottom right, #4D54D1, #A51C7B 50%, #EE4A37 100%)`
   }
@@ -333,7 +347,7 @@ function getBackground(p: HasImageProps) {
   return ''
 }
 
-function getPageBackground(p: HasImageProps) {
+function getPageBackground(p: HasImageProps & HasSponsoredRichMediaProps) {
   // Page background is duplicated since a backdrop-filter's
   // ancestor which has blur must also have background.
   // In our case, Widgets are the backdrop-filter element
@@ -343,7 +357,13 @@ function getPageBackground(p: HasImageProps) {
   // Page's ancestor: App.
   // Use a :before pseudo element so that we can fade the image
   // in when it is loaded.
-  return css<HasImageProps>`
+
+  if (p.hasSponsoredRichMediaBackground) {
+    return css<HasImageProps & HasSponsoredRichMediaProps>`
+    `
+  }
+
+  return css<HasImageProps & HasSponsoredRichMediaProps>`
     &:before {
       pointer-events: none;
       content: "";
@@ -367,7 +387,7 @@ function getPageBackground(p: HasImageProps) {
   `
 }
 
-export const App = styled('div') <AppProps & HasImageProps>`
+export const App = styled('div') <AppProps & HasImageProps & HasSponsoredRichMediaProps>`
   --bg-opacity: ${p => p.imageHasLoaded ? 1 : 0};
   position: relative;
   box-sizing: border-box;

@@ -18,6 +18,7 @@
 #include "base/metrics/histogram_macros.h"
 #include "brave/components/brave_ads/core/browser/service/ads_service.h"
 #include "brave/components/brave_ads/core/mojom/brave_ads.mojom-shared.h"
+#include "brave/components/brave_ads/core/public/ad_units/new_tab_page_ad/new_tab_page_ad_event_type_util.h"
 #include "brave/components/brave_ads/core/public/prefs/pref_provider.h"
 #include "brave/components/brave_rewards/common/pref_names.h"
 #include "brave/components/ntp_background_images/browser/brave_ntp_custom_background_service.h"
@@ -242,11 +243,6 @@ ViewCounterService::GetCurrentBrandedWallpaper() {
 
 std::optional<brave_ads::ConditionMatcherMap>
 ViewCounterService::GetConditionMatchers(const base::Value::Dict& dict) {
-  // For non-Rewards users, condition matchers should be included in the
-  // "photo.json" file under the NTP (New Tab Page) sponsored images component,
-  // within "campaigns2", falling back to "campaigns", or the root "campaign"
-  // for backwards compatibility.
-
   const auto* const list = dict.FindList(kWallpaperConditionMatchersKey);
   if (!list || list->empty()) {
     return std::nullopt;
@@ -454,6 +450,58 @@ void ViewCounterService::BrandedWallpaperLogoClicked(
   if (ntp_p3a_helper_) {
     // Should only report to P3A if ads are disabled, as required by spec.
     ntp_p3a_helper_->RecordClickAndMaybeLand(creative_instance_id);
+  }
+}
+
+void ViewCounterService::TriggeredSponsoredRichMediaEvent(
+    const std::string& placement_id,
+    const std::string& creative_instance_id,
+    const std::string& event_type) {
+  if (!ads_service_) {
+    return;
+  }
+
+  const std::optional<brave_ads::mojom::NewTabPageAdEventType>
+      mojom_ad_event_type = brave_ads::ToMojomNewTabPageAdEventType(event_type);
+  if (!mojom_ad_event_type) {
+    return;
+  }
+
+  switch (*mojom_ad_event_type) {
+    // Served impressions are not handled here because they are triggered from
+    // inside ads library.
+    case brave_ads::mojom::NewTabPageAdEventType::kServedImpression:
+    // Viewed impressions are not handled here because they are triggered in
+    // ViewCounterService::BrandedWallpaperWillBeDisplayed which is called after
+    // a Sponsored Rich Media background is displayed on an NTP.
+    case brave_ads::mojom::NewTabPageAdEventType::kViewedImpression: {
+      break;
+    }
+
+    case brave_ads::mojom::NewTabPageAdEventType::kClicked: {
+      if (ntp_p3a_helper_) {
+        // TODO(tmancey): @aseren to me it is not clear that ntp_p3a_helper_ is
+        // only instantiated if Rewards are disabled. Maybe we can make this
+        // clearer. Lets think more about this.
+
+        // Should only report to P3A if ads are disabled, as required by spec.
+        ntp_p3a_helper_->RecordClickAndMaybeLand(creative_instance_id);
+      }
+      // TODO(tmancey): @aseren This code is difficult to read due to the use of
+      // fallthrough and shared break statements. Lets separate non-Rewards and
+      // Rewards events into `TriggeredNonRewardsSponsoredRichMediaEvent` and
+      // `TriggeredRewardsSponsoredRichMediaEvent` functions, and then call
+      // those functions from this function.
+      [[fallthrough]];
+    }
+    case brave_ads::mojom::NewTabPageAdEventType::kMediaPlay:
+    case brave_ads::mojom::NewTabPageAdEventType::kMedia25:
+    case brave_ads::mojom::NewTabPageAdEventType::kMedia100: {
+      ads_service_->TriggerNewTabPageAdEvent(placement_id, creative_instance_id,
+                                          *mojom_ad_event_type,
+                                          /*intentional*/ base::DoNothing());
+      break;
+    }
   }
 }
 

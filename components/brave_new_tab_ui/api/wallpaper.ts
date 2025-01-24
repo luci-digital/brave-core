@@ -16,3 +16,7 @@ export function registerViewCount (): Promise<void> {
 export function brandedWallpaperLogoClicked (data: NewTab.BrandedWallpaper | undefined) {
   chrome.send('brandedWallpaperLogoClicked', [data])
 }
+
+export function triggerSponsoredRichMediaEvent (data: NewTab.BrandedWallpaper | undefined, eventType: NewTab.SponsoredRichMediaEventType) {
+  chrome.send('triggerSponsoredRichMediaEvent', [data, eventType])
+}

@@ -210,6 +210,11 @@ void BraveNewTabMessageHandler::RegisterMessages() {
           &BraveNewTabMessageHandler::HandleBrandedWallpaperLogoClicked,
           base::Unretained(this)));
   web_ui()->RegisterMessageCallback(
+      "triggerSponsoredRichMediaEvent",
+      base::BindRepeating(
+          &BraveNewTabMessageHandler::HandleSponsoredRichMediaEventTriggered,
+          base::Unretained(this)));
+  web_ui()->RegisterMessageCallback(
       "getWallpaperData",
       base::BindRepeating(&BraveNewTabMessageHandler::HandleGetWallpaperData,
                           base::Unretained(this)));
@@ -475,6 +480,31 @@ void BraveNewTabMessageHandler::HandleBrandedWallpaperLogoClicked(
   }
 }
 
+void BraveNewTabMessageHandler::HandleSponsoredRichMediaEventTriggered(
+    const base::Value::List& args) {
+  AllowJavascript();
+  if (args.size() != 2) {
+    LOG(ERROR) << "Invalid sponsored rich media event";
+    return;
+  }
+
+  const auto& arg = args[0].GetDict();
+  const std::string* placement_id =
+      arg.FindStringByDottedPath(ntp_background_images::kWallpaperIDKey);
+  const std::string* creative_instance_id =
+      arg.FindString(ntp_background_images::kCreativeInstanceIDKey);
+  const std::string* rich_media_event_type = args[1].GetIfString();
+
+  if (!placement_id || !creative_instance_id || !rich_media_event_type) {
+    return;
+  }
+
+  if (auto* service = ViewCounterServiceFactory::GetForProfile(profile_)) {
+    service->TriggeredSponsoredRichMediaEvent(
+        *placement_id, *creative_instance_id, *rich_media_event_type);
+  }
+}
+
 void BraveNewTabMessageHandler::HandleGetWallpaperData(
     const base::Value::List& args) {
   AllowJavascript();
@@ -521,7 +551,7 @@ void BraveNewTabMessageHandler::HandleGetWallpaperData(
   const std::string* wallpaper_id =
       data->FindString(ntp_background_images::kWallpaperIDKey);
   const std::string* campaign_id =
-      data->FindString(ntp_background_images::kCampaignIdKey);
+      data->FindString(ntp_background_images::kCampaignIDKey);
   service->BrandedWallpaperWillBeDisplayed(
       wallpaper_id ? *wallpaper_id : "",
       creative_instance_id ? *creative_instance_id : "",
