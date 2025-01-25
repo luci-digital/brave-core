@@ -214,6 +214,7 @@ void EngineConsumerOAIRemote::OnGenerateQuestionSuggestionsResponse(
     GenerationResult result) {
   if (!result.has_value() || result->empty()) {
     // Query resulted in error
+    DVLOG(2) << "Failed to generate question suggestions.";
     std::move(callback).Run(base::unexpected(std::move(result.error())));
     return;
   }

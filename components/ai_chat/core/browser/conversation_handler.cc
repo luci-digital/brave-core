@@ -1529,6 +1529,11 @@ void ConversationHandler::OnSuggestedQuestionsResponse(
         mojom::SuggestionGenerationStatus::HasGenerated;
     DVLOG(2) << "Got questions:" << base::JoinString(result.value(), "\n");
   } else {
+    // handle failure
+    if (result.error() != mojom::APIError::None) {
+      DVLOG(2) << __func__ << ": With error";
+      SetAPIError(std::move(result.error()));
+    }
     // TODO(nullhook): Set a specialized error state generated questions
     suggestion_generation_status_ =
         mojom::SuggestionGenerationStatus::CanGenerate;
