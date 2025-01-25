@@ -21,7 +21,8 @@ enum APIError {
   ContextLimitReached,
   InvalidEndpointURL,
   InvalidAPIKey,
-  ServiceOverloaded
+  ServiceOverloaded,
+  InvalidResponseFormat,
 };
 
 enum ModelEngineType {

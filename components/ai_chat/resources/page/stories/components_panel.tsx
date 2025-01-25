@@ -29,6 +29,7 @@ import ErrorInvalidAPIKey from '../components/alerts/error_invalid_api_key'
 import ErrorInvalidEndpointURL from '../components/alerts/error_invalid_endpoint_url'
 import ErrorRateLimit from '../components/alerts/error_rate_limit'
 import ErrorServiceOverloaded from '../components/alerts/error_service_overloaded'
+import ErrorInvalidResponseFormat from '../components/alerts/error_invalid_response_format'
 import LongConversationInfo from '../components/alerts/long_conversation_info'
 import WarningPremiumDisconnected from '../components/alerts/warning_premium_disconnected'
 
@@ -665,6 +666,7 @@ export const _Alerts = {
         <ErrorRateLimit />
         <ErrorRateLimit _testIsCurrentModelLeo={false} />
         <ErrorServiceOverloaded />
+        <ErrorInvalidResponseFormat />
         <LongConversationInfo />
         <WarningPremiumDisconnected />
       </div>

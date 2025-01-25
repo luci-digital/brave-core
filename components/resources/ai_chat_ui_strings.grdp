@@ -60,6 +60,9 @@
   <message name="IDS_CHAT_UI_ERROR_SERVICE_OVERLOADED" desc="An error presented when the API service is overloaded">
     The endpoint is currently overloaded. Please try again later.
   </message>
+  <message name="IDS_CHAT_UI_ERROR_INVALID_RESPONSE_FORMAT" desc="An error presented when the API response is in an unexpected format">
+    The response from the model is in an invalid format. Please check your configuration and try again.
+  </message>
   <message name="IDS_CHAT_UI_RETRY_BUTTON_LABEL" desc="A button label to retry API again">
      Retry
   </message>

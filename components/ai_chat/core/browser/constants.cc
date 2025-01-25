@@ -6,11 +6,8 @@
 #include "brave/components/ai_chat/core/browser/constants.h"
 
 #include <array>
-#include <functional>
-#include <string>
 #include <utility>
 
-#include "base/containers/flat_tree.h"
 #include "base/strings/string_util.h"
 #include "components/grit/brave_components_strings.h"
 #include "mojo/public/cpp/bindings/struct_ptr.h"
@@ -40,6 +37,8 @@ base::span<const webui::LocalizedString> GetLocalizedStrings() {
        {"errorInvalidAPIKey", IDS_CHAT_UI_ERROR_INVALID_API_KEY},
        {"errorOAIRateLimit", IDS_CHAT_UI_ERROR_OAI_RATE_LIMIT},
        {"errorServiceOverloaded", IDS_CHAT_UI_ERROR_SERVICE_OVERLOADED},
+       {"errorInvalidResponseFormat",
+        IDS_CHAT_UI_ERROR_INVALID_RESPONSE_FORMAT},
        {"retryButtonLabel", IDS_CHAT_UI_RETRY_BUTTON_LABEL},
        {"introMessage-chat-basic", IDS_CHAT_UI_INTRO_MESSAGE_CHAT_BASIC},
        {"introMessage-chat-leo-expanded",

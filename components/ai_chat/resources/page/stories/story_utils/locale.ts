@@ -21,6 +21,7 @@ provideStrings({
   errorInvalidAPIKey: 'The API key configured for this model is invalid. Please check your configuration and try again.',
   errorRateLimit: 'You\'ve reached the premium rate limit. Please try again in a few hours.',
   errorServiceOverloaded: 'The endpoint is currently overloaded. Please try again later.',
+  errorInvalidResponseFormat: 'The response from the model is in an invalid format. Please check your configuration and try again.',
   braveLeoAssistantEndpointInvalidError: 'The endpoint URL is invalid. Please check the URL and try again.',
   braveLeoAssistantEndpointValidAsPrivateIp: 'If you would like to use a private IP address, you must first enable "Private IP Addresses for Custom Model Enpoints" via brave://flags/#brave-ai-chat-allow-private-ips',
   retryButtonLabel: 'Retry',

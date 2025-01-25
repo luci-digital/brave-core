@@ -19,6 +19,7 @@ import ErrorInvalidAPIKey from '../alerts/error_invalid_api_key'
 import ErrorInvalidEndpointURL from '../alerts/error_invalid_endpoint_url'
 import ErrorRateLimit from '../alerts/error_rate_limit'
 import ErrorServiceOverloaded from '../alerts/error_service_overloaded'
+import ErrorInvalidResponseFormat from '../alerts/error_invalid_response_format'
 import LongConversationInfo from '../alerts/long_conversation_info'
 import NoticeConversationStorage from '../notices/notice_conversation_storage'
 import WarningPremiumDisconnected from '../alerts/warning_premium_disconnected'
@@ -103,6 +104,9 @@ function Main() {
       case Mojom.APIError.ServiceOverloaded:
         currentErrorElement = <ErrorServiceOverloaded
           onRetry={conversationContext.retryAPIRequest} />
+        break
+      case Mojom.APIError.InvalidResponseFormat:
+        currentErrorElement = <ErrorInvalidResponseFormat />
         break
       case Mojom.APIError.RateLimitReached:
         currentErrorElement = <ErrorRateLimit />
