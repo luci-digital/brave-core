@@ -5,11 +5,9 @@
 
 #include "brave/components/ai_chat/core/browser/engine/oai_api_client.h"
 
-#include <list>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <vector>
 
 #include "base/containers/flat_map.h"
@@ -23,6 +21,7 @@
 #include "brave/components/ai_chat/core/common/mojom/ai_chat.mojom-forward.h"
 #include "brave/components/ai_chat/core/common/mojom/ai_chat.mojom.h"
 #include "brave/components/api_request_helper/api_request_helper.h"
+#include "gmock/gmock.h"
 #include "mojo/public/cpp/bindings/struct_ptr.h"
 #include "net/base/net_errors.h"
 #include "net/http/http_request_headers.h"
@@ -185,6 +184,67 @@ TEST_F(OAIAPIUnitTest, PerformRequest) {
 
   client_->PerformRequest(
       *model_options, std::move(messages.value().GetList()),
+      base::BindRepeating(&MockCallbacks::OnDataReceived,
+                          base::Unretained(&mock_callbacks)),
+      base::BindOnce(&MockCallbacks::OnCompleted,
+                     base::Unretained(&mock_callbacks)));
+
+  run_loop.Run();
+  testing::Mock::VerifyAndClearExpectations(client_.get());
+  testing::Mock::VerifyAndClearExpectations(mock_request_helper);
+}
+
+TEST_F(OAIAPIUnitTest, HandleInavlidResponseFormat) {
+  mojom::CustomModelOptionsPtr model_options = mojom::CustomModelOptions::New(
+      "test_api_key", 0, 0, 0, "test_system_prompt", GURL("https://test.com"),
+      "test_model");
+
+  // Simulate an invalid response format from the server
+  std::string invalid_server_response =
+      R"({"choices":[{"message":{"not_content":"value"}}]})";
+
+  MockAPIRequestHelper* mock_request_helper =
+      client_->GetMockAPIRequestHelper();
+  testing::StrictMock<MockCallbacks> mock_callbacks;
+  base::RunLoop run_loop;
+
+  // Intercept API Request Helper call and verify the request is as expected
+  EXPECT_CALL(*mock_request_helper, RequestSSE(_, _, _, _, _, _, _, _))
+      .WillOnce([&](const std::string& method, const GURL& url,
+                    const std::string& body, const std::string& content_type,
+                    DataReceivedCallback data_received_callback,
+                    ResultCallback result_callback,
+                    const base::flat_map<std::string, std::string>& headers,
+                    const api_request_helper::APIRequestOptions& options) {
+        auto invalid_response = base::JSONReader::Read(invalid_server_response);
+        EXPECT_TRUE(invalid_response.has_value());
+
+        std::move(result_callback)
+            .Run(api_request_helper::APIRequestResult(
+                200, std::move(invalid_response.value()), {}, net::OK, GURL()));
+
+        run_loop.Quit();
+        return Ticket();
+      });
+
+  EXPECT_CALL(mock_callbacks, OnCompleted(_))
+      .WillOnce([&](GenerationResult result) {
+        EXPECT_FALSE(result.has_value());
+        EXPECT_EQ(result.error(), mojom::APIError::InvalidResponseFormat);
+      });
+
+  // Begin request
+  base::Value::List messages;
+
+  {
+    base::Value::Dict message;
+    message.Set("role", "user");
+    message.Set("content", "Hello, World.");
+    messages.Append(std::move(message));
+  }
+
+  client_->PerformRequest(
+      *model_options, std::move(messages),
       base::BindRepeating(&MockCallbacks::OnDataReceived,
                           base::Unretained(&mock_callbacks)),
       base::BindOnce(&MockCallbacks::OnCompleted,

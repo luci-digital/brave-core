@@ -5,12 +5,8 @@
 
 #include "brave/components/ai_chat/core/browser/engine/oai_api_client.h"
 
-#include <ios>
-#include <optional>
-#include <ostream>
 #include <string>
 #include <string_view>
-#include <type_traits>
 
 #include "base/containers/flat_map.h"
 #include "base/functional/bind.h"
@@ -19,7 +15,6 @@
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/metrics/field_trial_params.h"
-#include "base/strings/strcat.h"
 #include "base/types/expected.h"
 #include "brave/components/ai_chat/core/common/features.h"
 #include "brave/components/ai_chat/core/common/mojom/ai_chat.mojom.h"
@@ -134,27 +129,30 @@ void OAIAPIClient::OnQueryCompleted(GenerationCompletedCallback callback,
   const bool success = result.Is2XXResponseCode();
   // Handle successful request
   if (success) {
-    std::string completion = "";
-    // We're checking for a value body in case for non-streaming API results.
-    if (result.value_body().is_dict()) {
-      const base::Value::List* choices =
-          result.value_body().GetDict().FindList("choices");
-      if (!choices) {
-        DVLOG(2) << "No choices list found in response.";
-        return;
-      }
-      if (choices->front().is_dict()) {
-        const base::Value::Dict* message =
-            choices->front().GetDict().FindDict("message");
-        if (!message) {
-          DVLOG(2) << "No message dict found in response.";
-          return;
-        }
-        completion = *message->FindString("content");
-      }
+    // We expect to find a list of completion choices in the response.
+    const base::Value::List* choices =
+        result.value_body().is_dict()
+            ? result.value_body().GetDict().FindList("choices")
+            : nullptr;
+
+    // Retrieve the first completion choice's content, if any.
+    const auto* message =
+        (choices && !choices->empty() && choices->front().is_dict())
+            ? choices->front().GetDict().FindStringByDottedPath(
+                  "message.content")
+            : nullptr;
+
+    // Return the completion message.
+    if (message) {
+      std::move(callback).Run(base::ok(std::move(*message)));
+      return;
     }
 
-    std::move(callback).Run(base::ok(std::move(completion)));
+    // If no completion was found, log and return an error.
+    // This situation may occur when the response format is unexpected.
+    DVLOG(2) << "No completion was found in response.";
+    std::move(callback).Run(
+        base::unexpected(mojom::APIError::InvalidResponseFormat));
     return;
   }
 
