@@ -94,7 +94,6 @@ void RegisterChromeWebUIConfigs() {
   }
 
 #if BUILDFLAG(ENABLE_BRAVE_EDUCATION)
-  map.AddWebUIConfig(
-      std::make_unique<BraveEducationPageUIConfig>());
+  map.AddWebUIConfig(std::make_unique<BraveEducationPageUIConfig>());
 #endif
 }

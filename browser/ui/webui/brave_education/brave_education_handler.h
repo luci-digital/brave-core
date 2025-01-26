@@ -8,16 +8,14 @@
 #ifndef BRAVE_BROWSER_UI_WEBUI_BRAVE_EDUCATION_BRAVE_EDUCATION_HANDLER_H_
 #define BRAVE_BROWSER_UI_WEBUI_BRAVE_EDUCATION_BRAVE_EDUCATION_HANDLER_H_
 
-#include "brave/components/brave_education/education_urls.h"
 #include "brave/browser/ui/webui/brave_education/brave_education.mojom.h"
+#include "brave/components/brave_education/education_urls.h"
 #include "content/public/browser/web_ui_message_handler.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "ui/webui/mojo_web_ui_controller.h"
-
-class Profile;
 
 // Page handler for brave://getting-started
 class BraveEducationHandler : public brave_education::mojom::PageHandler {

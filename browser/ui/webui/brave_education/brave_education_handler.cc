@@ -7,6 +7,8 @@
 
 #include "brave/browser/ui/webui/brave_education/brave_education_handler.h"
 
+#include <utility>
+
 BraveEducationHandler::BraveEducationHandler(
     mojo::PendingReceiver<brave_education::mojom::PageHandler> receiver,
     mojo::PendingRemote<brave_education::mojom::Page> page,

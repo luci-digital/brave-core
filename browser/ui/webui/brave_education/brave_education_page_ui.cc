@@ -9,6 +9,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "brave/browser/ui/webui/brave_browser_command/brave_browser_command_handler.h"
 #include "brave/browser/ui/webui/brave_education/brave_education_handler.h"
@@ -47,7 +48,7 @@ void CreateAndAddWhatsNewUIHtmlSource(content::WebUI* web_ui,
   // Allow embedding of iframe content from allowed domains.
   source->OverrideContentSecurityPolicy(
       network::mojom::CSPDirectiveName::ChildSrc,
-      "child-src chrome://webui-test https://brave.com/ "
+      "child-src chrome://webui-test https://browser-education.brave.com "
       "https://2263.pr.bravesoftware.com;");
 }
 

@@ -161,9 +161,8 @@ TEST_F(BraveEducationPageHandlerTest, OffTheRecordProfile) {
       future.GetCallback());
   ASSERT_FALSE(future.Get());
 
-  handler->CanExecuteCommand(
-      brave_browser_command::mojom::Command::kOpenAIChat,
-      future.GetCallback());
+  handler->CanExecuteCommand(brave_browser_command::mojom::Command::kOpenAIChat,
+                             future.GetCallback());
   ASSERT_FALSE(future.Get());
 
   EXPECT_TRUE(actions().empty());
