@@ -133,9 +133,6 @@ TEST_F(BraveEducationPageHandlerTest, ChatCommandsExecuted) {
   EXPECT_EQ(actions()[0], "open-ai-chat");
 }
 
-// TODO(bsclifton): this currently fails. The web UI won't load
-// for OTR, but the handler works fine. This might have been a change
-// in behavior during the refactoring.
 TEST_F(BraveEducationPageHandlerTest, OffTheRecordProfile) {
   auto* otr_profile = profile().GetOffTheRecordProfile(
       Profile::OTRProfileID::CreateUniqueForTesting(),
@@ -145,19 +142,30 @@ TEST_F(BraveEducationPageHandlerTest, OffTheRecordProfile) {
 
   base::test::TestFuture<bool> future;
 
-  handler->ExecuteCommand(
+  // browser/resources/brave_education/brave_education_app.ts
+  // calls `CanExecuteCommand` before calling `ExecuteCommand`
+  //
+  // Since OTR does not allow, callback is immediately called w/ false
+  handler->CanExecuteCommand(
       brave_browser_command::mojom::Command::kOpenWalletOnboarding,
-      base::DoNothing());
-  handler->ExecuteCommand(
-      brave_browser_command::mojom::Command::kOpenRewardsOnboarding,
-      base::DoNothing());
-  handler->ExecuteCommand(
-      brave_browser_command::mojom::Command::kOpenVPNOnboarding,
-      base::DoNothing());
-  handler->ExecuteCommand(brave_browser_command::mojom::Command::kOpenAIChat,
-                          future.GetCallback());
-
+      future.GetCallback());
   ASSERT_FALSE(future.Get());
+
+  handler->CanExecuteCommand(
+      brave_browser_command::mojom::Command::kOpenRewardsOnboarding,
+      future.GetCallback());
+  ASSERT_FALSE(future.Get());
+
+  handler->CanExecuteCommand(
+      brave_browser_command::mojom::Command::kOpenVPNOnboarding,
+      future.GetCallback());
+  ASSERT_FALSE(future.Get());
+
+  handler->CanExecuteCommand(
+      brave_browser_command::mojom::Command::kOpenAIChat,
+      future.GetCallback());
+  ASSERT_FALSE(future.Get());
+
   EXPECT_TRUE(actions().empty());
 }
 
