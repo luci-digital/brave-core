@@ -112,7 +112,7 @@ void BraveEducationPageUI::CreateBrowserCommandHandler(
   command_handler_ = std::make_unique<BraveBrowserCommandHandler>(
       std::move(pending_handler), profile_, supported_commands,
       std::make_unique<brave_education::BraveEducationPageDelegateDesktop>(
-          *tab));
+          *tab->GetBrowserWindowInterface()));
 }
 
 BraveEducationPageUI::~BraveEducationPageUI() = default;
